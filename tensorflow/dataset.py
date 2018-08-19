@@ -23,6 +23,7 @@ import json
 import logging
 import numpy as np
 from collections import Counter
+import jieba
 
 
 class BRCDataset(object):
@@ -52,16 +53,60 @@ class BRCDataset(object):
                 self.test_set += self._load_dataset(test_file)
             self.logger.info('Test set size: {} questions.'.format(len(self.test_set)))
 
+    def preprocess_sample(self,sample):
+        '''
+        调整数据集,以保证和Dureader一致
+        :param sample:
+        :return:
+        '''
+        keys=sample.keys()
+
+        if "segmented_answers" not in keys:
+            segmented_answers=[]
+            for answer in sample["answers"]:
+                seg_ans=list(jieba.cut(answer))
+                segmented_answers.append(seg_ans)
+            sample["segmented_answers"]=segmented_answers
+
+        if "fake_answers" not in keys:
+            sample["fake_answers"]=[""]
+
+        if "segmented_question" not in keys:
+            sample["segmented_question"]=list(jieba.cut(sample["question"]))
+
+        if len(sample["documents"])==1 and "most_related_para" not in sample["documents"][0].keys():
+            sample["documents"][0]["most_related_para"]=0
+
+        for doc in sample["documents"]:
+            if "segmented_paragraphs" in doc.keys():
+                continue
+
+            segmented_paragraphs=[]
+            for para in doc['paragraphs']:
+                segmented_paragraphs.append(list(jieba.cut(para)))
+            doc['segmented_paragraphs']=segmented_paragraphs
+        return sample
+
+
+
+
+
+
+
+
     def _load_dataset(self, data_path, train=False):
         """
         Loads the dataset
         Args:
             data_path: the data file to load
         """
-        with open(data_path) as fin:
+        with open(data_path,encoding='utf-8') as fin:
             data_set = []
             for lidx, line in enumerate(fin):
                 sample = json.loads(line.strip())
+
+                sample=self.preprocess_sample(sample)
+
                 if train:
                     if len(sample['answer_spans']) == 0:
                         continue

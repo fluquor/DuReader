@@ -17,7 +17,7 @@
 """
 This module finds the most related paragraph of each document according to recall.
 """
-
+import logging
 import sys
 if sys.version[0] == '2':
     reload(sys)
@@ -212,7 +212,29 @@ def find_fake_answer(sample):
 
 
 if __name__ == '__main__':
-    for line in sys.stdin:
-        sample = json.loads(line)
-        find_fake_answer(sample)
-        print(json.dumps(sample, encoding='utf8', ensure_ascii=False))
+    logging.basicConfig(level=logging.INFO)
+    logger=logging.getLogger('preprocessed')
+    # for line in sys.stdin:
+    #     sample = json.loads(line)
+    #     find_fake_answer(sample)
+    #     print(json.dumps(sample, encoding='utf8', ensure_ascii=False))
+    filename='../data/data_train_raw.txt.after'
+    saved='../data/data_train_preprocessed.json'
+    preprocessed_data=[]
+    logger.info('open file')
+    i=0
+    with open(filename,encoding='utf-8') as fin:
+        lines=fin.readlines()
+        for line in lines:
+            i+=1
+            sample = json.loads(line)
+
+            if i%50 ==0 :
+                logger.info('Json loaded: {}'.format(i))
+            find_fake_answer(sample)
+            preprocessed_data.append(sample)
+    logger.info('write file')
+    with open(saved,'w',encoding='utf-8') as fout:
+        for sample in preprocessed_data:
+            json.dump(sample, fout, ensure_ascii=False)
+            fout.write('\n')

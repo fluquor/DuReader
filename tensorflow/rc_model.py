@@ -335,7 +335,7 @@ class RCModel(object):
 
         # this average loss is invalid on test set, since we don't have true start_id and end_id
         ave_loss = 1.0 * total_loss / total_num
-        # compute the bleu and rouge scores if reference answers is provided
+        # compute the bleu_metric and rouge_metric scores if reference answers is provided
         if len(ref_answers) > 0:
             pred_dict, ref_dict = {}, {}
             for pred, ref in zip(pred_answers, ref_answers):

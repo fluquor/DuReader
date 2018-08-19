@@ -124,7 +124,7 @@ def read_file(file_name, task, is_ref=False):
 
 def compute_bleu_rouge(pred_dict, ref_dict, bleu_order=4):
     """
-    Compute bleu and rouge scores.
+    Compute bleu_metric and rouge_metric scores.
     """
     assert set(pred_dict.keys()) == set(ref_dict.keys()), \
             "missing keys: {}".format(set(ref_dict.keys()) - set(pred_dict.keys()))
@@ -264,7 +264,7 @@ def get_metrics(pred_result, ref_result, task, source):
 
 def prepare_bleu(pred_result, ref_result, task):
     """
-    Prepares data for calculation of bleu and rouge scores.
+    Prepares data for calculation of bleu_metric and rouge_metric scores.
     """
     pred_list, ref_list = [], []
     qids = ref_result.keys()

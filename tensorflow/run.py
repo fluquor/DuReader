@@ -61,6 +61,8 @@ def parse_args():
                                 help='train batch size')
     train_settings.add_argument('--epochs', type=int, default=10,
                                 help='train epochs')
+    train_settings.add_argument('--with_restore',action='store_true',
+                                help='train with model restored from existing model.')
 
     model_settings = parser.add_argument_group('model settings')
     model_settings.add_argument('--algo', choices=['BIDAF', 'MLSTM'], default='BIDAF',
@@ -153,6 +155,9 @@ def train(args):
     brc_data.convert_to_ids(vocab)
     logger.info('Initialize the model...')
     rc_model = RCModel(vocab, args)
+    if args.with_restore:
+        logger.info('Restoring model from file(Train only)...')
+        rc_model.restore(model_dir=args.model_dir, model_prefix=args.algo)
     logger.info('Training the model...')
     rc_model.train(brc_data, args.epochs, args.batch_size, save_dir=args.model_dir,
                    save_prefix=args.algo,
