@@ -257,6 +257,7 @@ class RCModel(object):
         """
         pad_id = self.vocab.get_id(self.vocab.pad_token)
         max_bleu_4 = 0
+        max_rouge_l = 0
         for epoch in range(1, epochs + 1):
             self.logger.info('Training the model for epoch {}'.format(epoch))
             train_batches = data.gen_mini_batches('train', batch_size, pad_id, shuffle=True)
@@ -271,15 +272,21 @@ class RCModel(object):
                     self.logger.info('Dev eval loss {}'.format(eval_loss))
                     self.logger.info('Dev eval result: {}'.format(bleu_rouge))
 
-                    if bleu_rouge['Bleu-4'] > max_bleu_4:
+                    # if bleu_rouge['Bleu-4'] > max_bleu_4:
+                    #
+                    #     self.save(save_dir, save_prefix)
+                    #     max_bleu_4 = bleu_rouge['Bleu-4']
+
+                    if bleu_rouge['Rouge-L'] > max_rouge_l:
+                        self.logger.info('Getting a better Rouge-L score')
                         self.save(save_dir, save_prefix)
-                        max_bleu_4 = bleu_rouge['Bleu-4']
+                        max_rouge_l = bleu_rouge['Rouge-L']
                 else:
                     self.logger.warning('No dev set is loaded for evaluation in the dataset!')
-            else:
+
                 self.save(save_dir, save_prefix + '_' + str(epoch))
 
-    def evaluate(self, eval_batches, result_dir=None, result_prefix=None, save_full_info=False):
+    def evaluate(self, eval_batches, result_dir=None, result_prefix=None, save_full_info=False,result_dict=None):
         """
         Evaluates the model performance on eval_batches and results are saved if specified
         Args:
@@ -320,18 +327,20 @@ class RCModel(object):
                                          'yesno_answers': []})
                 if 'answers' in sample:
                     ref_answers.append({'question_id': sample['question_id'],
-                                         'question_type': sample['question_type'],
-                                         'answers': sample['answers'],
-                                         'entity_answers': [[]],
-                                         'yesno_answers': []})
+                                        'question_type': sample['question_type'],
+                                        'answers': sample['answers'],
+                                        'entity_answers': [[]],
+                                        'yesno_answers': []})
 
         if result_dir is not None and result_prefix is not None:
             result_file = os.path.join(result_dir, result_prefix + '.json')
-            with open(result_file, 'w') as fout:
+            with open(result_file, 'w',encoding='utf-8') as fout:
                 for pred_answer in pred_answers:
                     fout.write(json.dumps(pred_answer, ensure_ascii=False) + '\n')
 
             self.logger.info('Saving {} results to {}'.format(result_prefix, result_file))
+            if result_dict is not None:
+                result_dict['predict_result_dir']=result_file
 
         # this average loss is invalid on test set, since we don't have true start_id and end_id
         ave_loss = 1.0 * total_loss / total_num

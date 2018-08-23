@@ -30,6 +30,7 @@ import logging
 from dataset import BRCDataset
 from vocab import Vocab
 from rc_model import RCModel
+from extract_answer import extract_answer
 
 
 def parse_args():
@@ -63,6 +64,9 @@ def parse_args():
                                 help='train epochs')
     train_settings.add_argument('--with_restore',action='store_true',
                                 help='train with model restored from existing model.')
+    train_settings.add_argument('--extract_answer',action='store_true',
+                                help='extract answer after predicting')
+    # train_settings.add_argument()
 
     model_settings = parser.add_argument_group('model settings')
     model_settings.add_argument('--algo', choices=['BIDAF', 'MLSTM'], default='BIDAF',
@@ -209,8 +213,17 @@ def predict(args):
     logger.info('Predicting answers for test set...')
     test_batches = brc_data.gen_mini_batches('test', args.batch_size,
                                              pad_id=vocab.get_id(vocab.pad_token), shuffle=False)
+
+    result_dict={}
     rc_model.evaluate(test_batches,
-                      result_dir=args.result_dir, result_prefix='test.predicted')
+                      result_dir=args.result_dir, result_prefix='test.predicted',
+                      result_dict=result_dict)
+
+    if 'predict_result_dir' in result_dict.keys() and args.extract_answer:
+        result_file=result_dict['predict_result_dir']
+        extract_answer(result_file)
+
+    extract_answer()
 
 
 def run():
